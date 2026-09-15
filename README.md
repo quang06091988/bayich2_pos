@@ -7,7 +7,7 @@ nạp đơn Zalo từ link, báo cáo và **sổ bán hàng chung** trên Google
 
 | Nguồn | Dùng để |
 |---|---|
-| Tab **Menu**, **Info** (sheet bayich2, CSV công khai) | Danh sách hàng, giá, thông tin tiệm, Link Bảng Giá |
+| Tab **Menu**, **Info** (sheet bayich2, CSV công khai) | Danh sách hàng, giá, thông tin tiệm |
 | Apps Script **bayich2_banhang** (thư mục `appsscript/`) | Sổ bán hàng chung: ghi đơn, chốt ngày, báo cáo |
 
 Script ghi vào 4 tab của sheet bayich2:
