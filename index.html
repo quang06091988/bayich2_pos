@@ -306,8 +306,14 @@
   #invCust input#invCustName{flex:1.6}
 
   /* ---------- BÁO CÁO ---------- */
-  .rep-tabs{display:flex;gap:8px;margin-top:8px}
-  .rep-tabs button{padding:7px 14px;border-radius:16px;font-size:13px;font-weight:600;background:var(--surface2);color:var(--ink-soft)}
+  .rep-head{padding:14px 16px 10px}
+  .rep-dau{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .rep-dong{flex:none;width:36px;height:36px;border-radius:50%;background:var(--surface2);color:var(--ink-soft);font-size:15px;font-weight:700;line-height:1}
+  .rep-dong:hover{background:#e0d6bd;color:var(--ink)}
+  /* các khoảng thời gian: một hàng, không xuống dòng — chật thì vuốt ngang */
+  .rep-tabs{display:flex;gap:6px;margin:10px -16px 0;padding:0 16px 2px;overflow-x:auto;scrollbar-width:none}
+  .rep-tabs::-webkit-scrollbar{display:none}
+  .rep-tabs button{flex:none;white-space:nowrap;padding:7px 13px;border-radius:16px;font-size:13px;font-weight:600;background:var(--surface2);color:var(--ink-soft)}
   .rep-tabs button.active{background:var(--green);color:#fff}
   .kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
   .kpi{background:var(--bg);border-radius:12px;padding:14px 10px;text-align:center}
@@ -368,11 +374,12 @@
   @media(max-width:520px){ .sale-acts{grid-template-columns:1fr 1fr} }
   .bar-row .val{flex-shrink:0;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--green-deep)}
   .rep-empty{text-align:center;color:var(--ink-soft);font-size:14px;line-height:1.6;padding:40px 10px}
-  .hist-row{display:flex;justify-content:space-between;align-items:center;padding:11px 12px;border-radius:10px;background:var(--bg);margin-bottom:7px;font-size:13px}
+  .hist-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--bg);margin-bottom:7px;font-size:13px}
   .hist-row:hover{background:var(--surface2)}
   .hist-row.voided{opacity:.5}
-  .hist-row .meta{color:var(--ink-soft);font-size:12px}
-  .hist-row .amt{font-family:'Space Mono',monospace;font-weight:700;color:var(--green-deep)}
+  .hist-row .hr-trai{min-width:0}
+  .hist-row .meta{display:block;margin-top:2px;color:var(--ink-soft);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hist-row .amt{flex:none;white-space:nowrap;font-family:'Space Mono',monospace;font-weight:700;color:var(--green-deep)}
   .hist-row .chev{color:var(--ink-soft)}
   .kpi .d{font-size:11px;font-weight:700;margin-top:3px}
   .kpi .d.up{color:var(--green)}
@@ -428,11 +435,14 @@
   .field input.o-chu{font-family:inherit;font-size:16px;text-align:left}
   .field + .field{margin-top:12px}
   .may-loi{color:var(--danger);font-size:13px;margin-top:10px;min-height:1em;line-height:1.5}
-  .rep-dau-phai{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .nguon-bc{display:flex;background:var(--surface2);border-radius:10px;padding:3px}
-  .nguon-bc button{padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--ink-soft)}
-  .nguon-bc button.on{background:var(--paper);color:var(--green-deep);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-  .btn-chot{padding:8px 14px;font-size:13.5px}
+  /* cuối báo cáo: công cụ + đổi nguồn (thay cho phần chân cố định) */
+  .rep-cuoi{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+  .rep-cuoi .rep-tools{margin-top:0}
+  .nguon-bc{display:flex;justify-content:center}
+  .nguon-bc button{padding:6px 10px;font-size:13px;font-weight:600;color:var(--green-deep)}
+  .nguon-bc button:hover{text-decoration:underline}
+  .btn-chot{flex:none;width:auto;padding:8px 14px;font-size:13.5px}
+  .chot-tm{margin:-2px 0 8px;font-size:12.5px;color:var(--ink-soft)}
   .chot-khoi{background:var(--bg);border-radius:14px;padding:2px 14px 6px;margin-bottom:6px}
   .chot-khoi .rep-h-row{margin:12px 0 6px}
   .chot-tong{font-family:'Fraunces',serif;font-weight:700;font-size:19px;color:var(--green-deep)}
@@ -510,6 +520,7 @@
       </div>
       <div class="top-actions">
         <button class="so-pill" id="soPill" hidden></button>
+        <button class="so-pill canh" id="giaPill" hidden></button>
         <button class="report-btn" id="btnNhanh" aria-label="Ghi nhanh một đơn">⚡ <span class="chu">Ghi nhanh</span></button>
         <button class="report-btn" id="btnReport" aria-label="Báo cáo">📊 <span class="chu">Báo cáo</span></button>
       </div>
@@ -631,32 +642,31 @@
 <!-- BÁO CÁO -->
 <div class="overlay" id="reportOverlay">
   <div class="modal wide">
-    <div class="modal-head">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-        <div><h3>Báo cáo bán hàng</h3><p id="repSubtitle">Hôm nay</p></div>
-        <div class="rep-dau-phai">
-          <div class="nguon-bc" id="nguonBC" hidden><button data-nguon="chung">Sổ chung</button><button data-nguon="may">Máy này</button></div>
-          <button class="btn btn-pay btn-chot" id="btnChot">Chốt ngày</button>
-        </div>
+    <div class="modal-head rep-head">
+      <div class="rep-dau">
+        <div><h3>Báo cáo</h3><p id="repSubtitle">Sổ chung</p></div>
+        <button class="rep-dong" id="btnCloseReport" aria-label="Đóng báo cáo">✕</button>
       </div>
       <div class="rep-tabs" id="repTabs">
         <button data-range="today" class="active">Hôm nay</button>
         <button data-range="7">7 ngày</button>
         <button data-range="month">Tháng này</button>
         <button data-range="year">Năm nay</button>
-        <button data-range="all">Toàn bộ</button>
+        <button data-range="all">Tất cả</button>
       </div>
     </div>
-    <div class="modal-body" id="reportBody"></div>
-    <div class="modal-foot" style="grid-template-columns:1fr">
-      <div class="rep-tools">
-        <button id="btnExcel" class="primary">📊 Xuất Excel</button>
-        <button id="btnBackup">⬇ Sao lưu</button>
-        <button id="btnImport">⬆ Nạp file</button>
-        <button id="btnClearData" class="danger">🗑 Xóa lịch sử</button>
-        <input type="file" id="importFile" accept="application/json" hidden>
+    <div class="modal-body">
+      <div id="reportBody"></div>
+      <div class="rep-cuoi">
+        <div class="rep-tools">
+          <button id="btnExcel" class="primary">📊 Xuất Excel</button>
+          <button id="btnBackup">⬇ Sao lưu</button>
+          <button id="btnImport">⬆ Nạp file</button>
+          <button id="btnClearData" class="danger">🗑 Xóa lịch sử</button>
+          <input type="file" id="importFile" accept="application/json" hidden>
+        </div>
+        <div class="nguon-bc" id="nguonBC" hidden><button data-nguon="chung">‹ Về sổ chung</button><button data-nguon="may">Xem lịch sử riêng máy này ›</button></div>
       </div>
-      <button class="btn btn-pay" id="btnCloseReport" style="margin-top:10px">Đóng</button>
     </div>
   </div>
 </div>
@@ -781,6 +791,9 @@ const INFO_TSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSDgOqo8
 
 // Sổ bán hàng chung: Apps Script bayich2_banhang ghi vào các tab BanHang / BanHangMon / ChotNgay (Mã PIN ở tab CauHinh)
 const API_SO = 'https://script.google.com/macros/s/AKfycbyPQNTjjlOHMY71N8AS8F26UptH3jWlXjcBgmf7sKXsJtPXYNnN7An2obL3JBEpYjzyJg/exec';
+/* Đồng bộ giá: POS chỉ ĐỌC để nhắc khi giá trong Menu còn khác Retail (ghi toa rồi mà chưa đồng bộ) */
+const API_DONGBO = 'https://script.google.com/macros/s/AKfycbz767Ti7iftH6thPYqdMfr7YqDnT4ntOwZT5vMj9Ox7T6v4FCJwrrWsx8FLtp0JQfVy/exec';
+const LINK_DONGBO = 'https://bayich2-dongbogia.vercel.app/';
 const MAY_KEY='b2pos_may', CHO_KEY='b2pos_cho_gui', CAU_KEY='b2pos_cau';
 
 // Emoji theo tab (khớp từ trên xuống — đặt cụm cụ thể/hiếm TRƯỚC cụm chung)
@@ -1595,6 +1608,26 @@ function veSoPill(){
   b.textContent='✓ Sổ'; b.classList.add('ok'); b.title='Mọi đơn của máy "'+MAY.ten+'" đã lên sổ chung';
 }
 
+/* ---- nhắc giá chưa đồng bộ ----
+   Hỏi trang Đồng bộ giá (chỉ đọc): món Menu nào có giá bán khác Retail thì POS đang có thể bán giá cũ.
+   Mỗi lần một lượt, hạn 25 giây; lỗi thì im lặng ẩn nút — không bao giờ cản việc bán. */
+let lucKiemGia=0, dangKiemGia=false;
+async function kiemGia(){
+  if(dangKiemGia) return;
+  dangKiemGia=true; lucKiemGia=Date.now();
+  const ctl=new AbortController(), hg=setTimeout(()=>ctl.abort(),25000);
+  let n=0;
+  try{
+    const r=await fetch(API_DONGBO+'?viec=xemTruoc&t='+Date.now(), { signal:ctl.signal });
+    const j=JSON.parse(await r.text());
+    if(j && j.ok && Array.isArray(j.mon)) n=j.mon.filter(m=>m.dich==='Menu' && m.trangThai==='do').length;
+  }catch(e){ n=0; }
+  finally{ clearTimeout(hg); dangKiemGia=false; }
+  const b=$('giaPill');
+  b.hidden=!n;
+  if(n){ b.innerHTML='⚠ '+n+' giá<span class="chu"> chưa đồng bộ</span>'; b.title=n+' món trong Menu còn giá khác Retail — bấm để mở trang Đồng bộ giá'; }
+}
+
 /* ---- cài máy ---- */
 function moCaiMay(){
   $('mayTen').value=MAY?MAY.ten:''; $('mayMa').value=MAY?MAY.ma:''; $('mayPin').value=''; $('mayLoi').textContent='';
@@ -1687,17 +1720,28 @@ async function guiChot(){
     if(!r.ok){ $('chotLoi').textContent = r.maLoi==='PIN' ? 'Mã PIN chung đã đổi — cài lại máy.' : (r.loi||'Chưa chốt được.'); return; }
     $('chotOverlay').classList.remove('show');
     toast('Đã chốt '+ngay.split('-').reverse().join('/')+': doanh thu '+money(r.chot.tong));
-    if($('reportOverlay').classList.contains('show')) taiVaVeBaoCao();
+    if($('reportOverlay').classList.contains('show')) taiVaVeBaoCao(true);
   }catch(e){ $('chotLoi').textContent='Chưa chốt được ('+e.message+'). Kiểm tra mạng rồi bấm lại — bấm lại không tạo trùng.'; }
   finally{ nut.disabled=false; nut.textContent='Chốt'; }
 }
 
-/* ---- báo cáo từ sổ chung ---- */
-function khoangTai(){   // kỳ đang xem + kỳ trước (để so sánh)
-  const now=new Date(), y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
-  const tu = repRange==='today' ? ngayVN(new Date(y,m,d-1)) : repRange==='7' ? ngayVN(new Date(y,m,d-14))
-           : repRange==='month' ? ngayVN(new Date(y,m-1,1)) : repRange==='year' ? ngayVN(new Date(y-1,0,1)) : '2020-01-01';
-  return { tu, den:ngayVN(now) };
+/* ---- báo cáo từ sổ chung ----
+   Bản tải gần nhất (BC) được lưu trong máy: mở báo cáo / đổi khoảng thì vẽ ngay từ đó, bản mới tải ở nền.
+   Mỗi lần tải lấy từ đầu tháng trước (xa hơn nếu đang xem Năm nay / Tất cả) → Hôm nay · 7 ngày · Tháng này
+   đổi qua lại không phải gọi lại Google. */
+const BC_KEY='b2pos_bc_cache', BC_MOI_MS=60000;
+let BC=docBC();   // { tu, den, don:[đơn như sổ trả về], chot:[…], luc }
+function docBC(){ try{ const v=JSON.parse(localStorage.getItem(BC_KEY)||'null'); if(v && v.tu && Array.isArray(v.don)) return v; }catch(e){} return null; }
+function luuBC(){ try{ localStorage.setItem(BC_KEY, JSON.stringify(BC)); }catch(e){} }
+function tuCanTai(){
+  const now=new Date(), dauThangTruoc=ngayVN(new Date(now.getFullYear(), now.getMonth()-1, 1)), t=tuNgayKy();
+  return t<dauThangTruoc ? t : dauThangTruoc;
+}
+const coBC=()=>!!(BC && BC.tu<=tuNgayKy());   // bản đã lưu phủ được khoảng đang xem
+function gioBC(){
+  if(!BC) return '';
+  const d=new Date(BC.luc), p=n=>String(n).padStart(2,'0');
+  return p(d.getHours())+':'+p(d.getMinutes())+(ngayVN(d)===ngayVN()?'':' '+p(d.getDate())+'/'+p(d.getMonth()+1));
 }
 function tuNgayKy(){   // ngày đầu của kỳ đang xem
   const now=new Date(), y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
@@ -1715,34 +1759,44 @@ function donTuSo(x){
     amt:+x.amt||0, sub:+x.sub||+x.amt||0, disc:+x.disc||0, cash:+x.cash||0, change:+x.change||0,
     khach:x.khach||'', sdt:x.sdt||'', void:!!x.void, may:x.may||'', nguon:x.nguon||'pos', items };
 }
-async function taiVaVeBaoCao(){
+/* Danh sách đơn đang xem = bản đã lưu + đơn còn trong hàng chờ của máy này (chưa gửi / vừa sửa) */
+function dungTuBC(){
+  const theoId={};
+  BC.don.forEach(x=>{ theoId[x.id]=donTuSo(x); });
+  Object.values(docCho()).forEach(s=>{ if(ngayVN(new Date(s.ts))>=BC.tu) theoId[s.id]=donTuSo(s); });
+  dsXem=Object.values(theoId).sort((a,b)=>a.ts-b.ts);
+  chotXem=BC.chot||[];
+}
+/* batBuoc: mở báo cáo, bấm Thử lại, vừa chốt ngày → luôn tải bản mới (ở nền nếu đã có bản lưu để vẽ ngay) */
+async function taiVaVeBaoCao(batBuoc){
   if(nguonBC!=='chung'){ dsXem=sales; loiBC=''; renderReport(); return; }
-  const lan=++lanTaiBC; taiBC=true; loiBC=''; renderReport();
-  const { tu, den }=khoangTai();
+  if(coBC()){
+    dungTuBC();
+    if(!batBuoc && Date.now()-BC.luc<BC_MOI_MS){ renderReport(); return; }   // vừa tải xong — khỏi hỏi Google
+  }
+  const lan=++lanTaiBC; taiBC=true; renderReport();
+  const tu=tuCanTai(), den=ngayVN();
   try{
     await guiSo();
     const r=await goiSo({ hanhDong:'baoCao', tu, den });
     if(lan!==lanTaiBC) return;
     if(!r.ok) throw new Error(r.maLoi==='PIN' ? 'mã PIN chung đã đổi — cài lại máy' : (r.loi||'sổ chung báo lỗi'));
     CAU.tienLe=r.tienLe||0; luuCau();
-    const theoId={};
-    r.don.forEach(x=>{ theoId[x.id]=donTuSo(x); });
-    Object.values(docCho()).forEach(s=>{ const k=ngayVN(new Date(s.ts)); if(k>=tu && k<=den) theoId[s.id]=donTuSo(s); });   // máy này chưa gửi / vừa sửa
-    dsXem=Object.values(theoId).sort((a,b)=>a.ts-b.ts);
-    chotXem=r.chot||[];
+    BC={ tu, den, don:r.don||[], chot:r.chot||[], luc:Date.now() }; luuBC();
+    loiBC=''; dungTuBC();
   }catch(e){
     if(lan!==lanTaiBC) return;
-    loiBC=e.message; dsXem=sales; chotXem=[];
+    loiBC=e.message;
+    if(!coBC()){ dsXem=sales; chotXem=[]; }   // chưa có bản nào của sổ chung → tạm xem lịch sử máy này
   }finally{
     if(lan===lanTaiBC){ taiBC=false; renderReport(); }
   }
 }
 function veNguonBC(){
   const g=$('nguonBC'); g.hidden=!MAY;
-  [...g.children].forEach(b=>b.classList.toggle('on', b.dataset.nguon===nguonBC));
-  const chiMay=nguonBC==='chung' && !loiBC;   // nạp file / xoá lịch sử chỉ áp cho dữ liệu trong máy
-  $('btnImport').style.display = chiMay ? 'none' : '';
-  $('btnClearData').style.display = chiMay ? 'none' : '';
+  [...g.children].forEach(b=>{ b.hidden = b.dataset.nguon===nguonBC; });   // chỉ hiện lối sang nguồn kia
+  const xemMay=dsXem===sales;   // sao lưu / nạp file / xoá lịch sử chỉ áp cho dữ liệu trong máy
+  ['btnBackup','btnImport','btnClearData'].forEach(id=>{ $(id).style.display = xemMay ? '' : 'none'; });
 }
 function chotTrongKy(){ const tu=tuNgayKy(); return chotXem.filter(c=>c.ngay>=tu).sort((a,b)=>a.ngay<b.ngay?1:-1); }
 function nhanNgay(ngay){
@@ -1752,7 +1806,7 @@ function nhanNgay(ngay){
 function htmlChotNgay(){
   const ds=chotTrongKy(), homNay=ngayVN();
   const posHomNay=dsXem.filter(s=>!s.void && ngayVN(new Date(s.ts))===homNay).reduce((a,s)=>a+s.amt,0);
-  const tong=ds.reduce((a,c)=>a+c.tong,0);
+  const tong=ds.reduce((a,c)=>a+c.tong,0), tm=ds.reduce((a,c)=>a+c.tienMat,0), ck=ds.reduce((a,c)=>a+c.chuyenKhoan,0);
   let hang;
   if(ds.length>31){   // năm / toàn bộ: gom theo tháng
     const theoThang={};
@@ -1762,24 +1816,27 @@ function htmlChotNgay(){
     hang=ds.map(c=>({ nhan:nhanNgay(c.ngay), phu:esc(c.nguoi||'')+(c.posGhiNhan?' · POS '+fmt(c.posGhiNhan):''), tm:c.tienMat, ck:c.chuyenKhoan, tong:c.tong }));
   }
   const coHomNay=ds.some(c=>c.ngay===homNay);
+  /* Số chính = doanh thu các ngày đã chốt. Chưa chốt ngày nào thì nói thẳng, không hiện "0đ" to. */
   return `<div class="chot-khoi">
-    <div class="rep-h-row"><div class="rep-h">Doanh thu theo chốt ngày</div><span class="chot-tong">${money(tong)}</span></div>
-    ${coHomNay?'':`<div class="chot-dong cho"><span>Hôm nay · chưa chốt<small>POS tạm tính ${money(posHomNay)} — cuối ngày bấm Chốt ngày</small></span></div>`}
+    <div class="rep-h-row"><div class="rep-h">Doanh thu theo chốt ngày</div>${ds.length?`<span class="chot-tong">${money(tong)}</span>`:''}</div>
+    <p class="chot-tm">${ds.length?`💵 Tiền mặt ${fmt(tm)} · 📱 Chuyển khoản ${fmt(ck)}`:'Chưa chốt ngày nào trong khoảng này.'}</p>
+    ${coHomNay?'':`<div class="chot-dong cho"><span>Hôm nay chưa chốt<small>POS tạm tính ${money(posHomNay)}</small></span><button class="btn btn-pay btn-chot" data-act="chot">Chốt ngày</button></div>`}
     ${hang.map(x=>`<div class="chot-dong"><span><b>${x.nhan}</b><small>${x.phu}</small></span><span class="so">TM ${fmt(x.tm)} · CK ${fmt(x.ck)}<b>${fmt(x.tong)}</b></span></div>`).join('')}
-    ${ds.length?'':'<p class="tcap" style="margin-bottom:8px">Chưa có ngày nào được chốt trong khoảng này.</p>'}
   </div>
   <div class="rep-h" style="margin-top:18px">Đơn ghi trong POS</div>`;
 }
-function htmlNguonDon(live){
+function chuNguonDon(live){
   const zalo=live.filter(s=>s.nguon==='zalo').length, nhanh=live.filter(s=>s.nguon==='nhanh').length;
-  if(!zalo && !nhanh) return '';
-  return `<p class="rep-cmp">Trong đó ${zalo?`<b>${zalo}</b> đơn từ Zalo`:''}${zalo&&nhanh?' · ':''}${nhanh?`<b>${nhanh}</b> ghi nhanh`:''}</p>`;
+  return (zalo?` · <b>${zalo}</b> đơn Zalo`:'')+(nhanh?` · <b>${nhanh}</b> ghi nhanh`:'');
 }
 function htmlDauBaoCao(){
   let h='';
   if(!MAY) h+=`<div class="don-canh">Đang xem lịch sử <b>máy này</b>. Cài sổ chung để xem đơn của mọi máy và chốt ngày.<br><button class="btn btn-ghost" data-act="caimay">Cài sổ chung</button></div>`;
-  else if(nguonBC==='chung' && loiBC) h+=`<div class="don-canh do">Không tải được sổ chung (${esc(loiBC)}) — đang xem dữ liệu máy này.<br><button class="btn btn-ghost" data-act="thulai">Thử lại</button></div>`;
-  else if(nguonBC==='chung') h+=htmlChotNgay();
+  else if(nguonBC==='chung' && loiBC && !coBC()) h+=`<div class="don-canh do">Không tải được sổ chung (${esc(loiBC)}) — đang xem dữ liệu máy này.<br><button class="btn btn-ghost" data-act="thulai">Thử lại</button></div>`;
+  else if(nguonBC==='chung'){
+    if(loiBC) h+=`<div class="don-canh">Chưa tải được bản mới (${esc(loiBC)}) — đang xem số liệu lúc ${gioBC()}.<br><button class="btn btn-ghost" data-act="thulai">Thử lại</button></div>`;
+    h+=htmlChotNgay();
+  }
   return h;
 }
 
@@ -1904,7 +1961,7 @@ function openReport(){
   histQuery=''; histPay='all'; histShown=30; topExpanded=false;
   if(nguonBC===null || (nguonBC==='chung' && !MAY)) nguonBC = MAY ? 'chung' : 'may';
   $('reportOverlay').classList.add('show');
-  taiVaVeBaoCao();
+  taiVaVeBaoCao(true);   // có bản lưu thì vẽ ngay, bản mới tải ở nền
 }
 
 /* Gom doanh thu theo trục thời gian phù hợp với khoảng đang xem.
@@ -1924,7 +1981,7 @@ function buildTimeSeries(live){
     lo=Math.max(0,lo-1); hi=Math.min(23,hi+1);
     const bars=[];
     for(let h=lo;h<=hi;h++) bars.push({label:p(h), value:byHour[h], full:p(h)+':00'});
-    return {title:'Doanh thu theo giờ', bars};
+    return {title:'Theo giờ', bars};
   }
 
   if(repRange==='7' || repRange==='month'){
@@ -1939,7 +1996,7 @@ function buildTimeSeries(live){
       const k=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
       bars.push({label:p(d.getDate()), value:byDay[k]||0, full:p(d.getDate())+'/'+p(d.getMonth()+1)});
     }
-    return {title:'Doanh thu theo ngày', bars};
+    return {title:'Theo ngày', bars};
   }
 
   const byMon={};
@@ -1953,7 +2010,7 @@ function buildTimeSeries(live){
     const k=d.getFullYear()+'-'+p(d.getMonth()+1);
     bars.push({label:'T'+(d.getMonth()+1), value:byMon[k]||0, full:'Tháng '+(d.getMonth()+1)+'/'+d.getFullYear()});
   }
-  return {title:'Doanh thu theo tháng', bars};
+  return {title:'Theo tháng', bars};
 }
 
 function renderTimeChart(live){
@@ -1970,37 +2027,6 @@ function renderTimeChart(live){
     <div class="rep-h">${ts.title}</div>
     <div class="tchart">${cols}</div>
     ${max>0?`<p class="tcap">Cao nhất: <b>${esc(peak.full)}</b> · <b>${fmt(peak.value)}đ</b></p>`:''}`;
-}
-
-/* --- So sánh với kỳ trước ---
-   Lấy đúng khoảng thời gian ĐÃ TRÔI QUA của kỳ hiện tại rồi chiếu sang kỳ trước:
-   9h sáng nay so với 0h→9h hôm qua, ngày 16 tháng này so với 1→16 tháng trước.
-   So cả kỳ trước (trọn tháng) với nửa tháng hiện tại thì con số nói dối. */
-function prevPeriodStats(){
-  const now=Date.now(), d=new Date();
-  let curStart, prevStart, label;
-  if(repRange==='today'){
-    curStart=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
-    prevStart=curStart-86400000; label='Cùng giờ hôm qua';
-  } else if(repRange==='7'){
-    curStart=now-7*86400000; prevStart=curStart-7*86400000; label='7 ngày trước đó';
-  } else if(repRange==='month'){
-    curStart=new Date(d.getFullYear(),d.getMonth(),1).getTime();
-    prevStart=new Date(d.getFullYear(),d.getMonth()-1,1).getTime(); label='Cùng kỳ tháng trước';
-  } else if(repRange==='year'){
-    curStart=new Date(d.getFullYear(),0,1).getTime();
-    prevStart=new Date(d.getFullYear()-1,0,1).getTime(); label='Cùng kỳ năm trước';
-  } else return null;   // "Toàn bộ" thì không có kỳ trước để so
-  const elapsed=now-curStart;
-  const win=dsXem.filter(s=>!s.void && s.ts>=prevStart && s.ts<prevStart+elapsed);
-  if(!win.length) return null;   // kỳ trước không bán gì → khỏi so, tránh chia cho 0
-  return { rev:win.reduce((a,x)=>a+x.amt,0), orders:win.length, label };
-}
-function deltaTag(cur,prev){
-  if(!prev) return '';
-  const pct=Math.round((cur-prev)/prev*100);
-  if(!pct) return '<div class="d flat">≈ kỳ trước</div>';
-  return pct>0 ? '<div class="d up">▲ '+pct+'%</div>' : '<div class="d down">▼ '+Math.abs(pct)+'%</div>';
 }
 
 let topMode='rev';       // 'rev' = xếp theo doanh thu (mặc định) · 'qty' = theo số lượng
@@ -2058,8 +2084,10 @@ function histRowHtml(s){
   const idx=dsXem.indexOf(s);
   const d=new Date(s.ts), p=n=>String(n).padStart(2,'0');
   const ico=s.method==='qr'?'📱':'💵';
+  /* 2 hàng: số phiếu … số tiền / giờ · cách trả · khách · máy bán (máy chỉ hiện ở sổ chung — gom đơn nhiều máy) */
+  const phu=[`${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`, ico, s.khach?esc(s.khach):'', dsXem!==sales && s.may?esc(s.may):''].filter(Boolean).join(' · ');
   return `<div class="hist-row${s.void?' voided':''}" data-sale="${idx}" role="button" tabindex="0">
-    <span><strong>${esc(s.bill)}</strong> <span class="meta">· ${p(d.getDate())}/${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())} · ${ico}</span>${s.void?' <span class="void-tag">Đã hủy</span>':''}${s.khach?` <span class="meta">· ${esc(s.khach)}</span>`:''}</span>
+    <span class="hr-trai"><strong>${esc(s.bill)}</strong>${s.void?' <span class="void-tag">Đã hủy</span>':''}<span class="meta">${phu}</span></span>
     <span class="amt">${fmt(s.amt)}đ <span class="chev">›</span></span>
   </div>`;
 }
@@ -2094,11 +2122,12 @@ function renderHistList(){
 
 function renderReport(){
   veNguonBC();
-  const data=filteredSales();
-  $('repSubtitle').textContent={today:'Hôm nay','7':'7 ngày qua',month:'Tháng này',year:'Năm nay',all:'Toàn bộ'}[repRange]
-    + (nguonBC==='chung' && !loiBC ? ' · sổ chung' : ' · máy này');
+  const data=filteredSales(), soChung=nguonBC==='chung' && dsXem!==sales;
+  $('repSubtitle').textContent = nguonBC==='chung' && MAY
+    ? (taiBC ? 'Sổ chung · đang cập nhật…' : coBC() ? 'Sổ chung · cập nhật '+gioBC() : 'Sổ chung')
+    : 'Lịch sử máy này';
   const body=$('reportBody');
-  if(nguonBC==='chung' && taiBC){ body.innerHTML='<div class="rep-empty">Đang tải sổ chung…</div>'; return; }
+  if(nguonBC==='chung' && taiBC && !coBC()){ body.innerHTML='<div class="rep-empty">Đang tải sổ chung…</div>'; return; }
   const dauBC=htmlDauBaoCao();
 
   if(!data.length){
@@ -2108,26 +2137,19 @@ function renderReport(){
   const live=data.filter(s=>!s.void);
   const revenue=live.reduce((s,x)=>s+x.amt,0);
   const orders=live.length;
-  const avg=orders?Math.round(revenue/orders):0;
   const cashRev=live.filter(s=>s.method!=='qr').reduce((s,x)=>s+x.amt,0);
   const qrRev=live.filter(s=>s.method==='qr').reduce((s,x)=>s+x.amt,0);
   const totalDisc=live.reduce((s,x)=>s+(x.disc||0),0);
   const voided=data.length-live.length;
-  const prev=prevPeriodStats();
   const itemMap=buildItemMap(live);
 
+  /* POS chỉ ghi một phần số đơn trong ngày → không so % với kỳ trước, không tính TB/đơn (dễ hiểu nhầm là doanh thu) */
   body.innerHTML = dauBC + `
-    <div class="kpis">
-      <div class="kpi"><div class="v">${fmt(revenue)}đ</div><div class="l">${nguonBC==='chung'&&!loiBC?'Tiền đơn POS':'Doanh thu'}</div>${prev?deltaTag(revenue,prev.rev):''}</div>
-      <div class="kpi"><div class="v">${orders}</div><div class="l">Số đơn</div>${prev?deltaTag(orders,prev.orders):''}</div>
-      <div class="kpi"><div class="v">${fmt(avg)}đ</div><div class="l">TB/đơn</div></div>
-    </div>
-    ${prev?`<p class="rep-cmp">${prev.label}: <b>${fmt(prev.rev)}đ</b> · ${prev.orders} đơn</p>`:''}
     <div class="kpis" style="grid-template-columns:1fr 1fr">
-      <div class="kpi"><div class="v">${fmt(cashRev)}đ</div><div class="l">💵 Tiền mặt</div></div>
-      <div class="kpi"><div class="v">${fmt(qrRev)}đ</div><div class="l">📱 Chuyển khoản</div></div>
+      <div class="kpi"><div class="v">${fmt(revenue)}đ</div><div class="l">${soChung?'Tiền đơn POS':'Doanh thu'}</div></div>
+      <div class="kpi"><div class="v">${orders}</div><div class="l">Số đơn</div></div>
     </div>
-    ${htmlNguonDon(live)}
+    <p class="rep-cmp">💵 Tiền mặt <b>${fmt(cashRev)}đ</b> · 📱 Chuyển khoản <b>${fmt(qrRev)}đ</b>${chuNguonDon(live)}</p>
     ${totalDisc>0?`<p class="tb-note" style="margin:-4px 0 6px">Đã giảm giá cho khách: <b>${fmt(totalDisc)}đ</b></p>`:''}
     ${voided>0?`<p class="tb-note" style="margin:-4px 0 12px">Có <b>${voided}</b> đơn đã hủy — không tính vào doanh thu.</p>`:''}
 
@@ -2441,6 +2463,7 @@ async function loadFromSheet(manual){
       renderCats(); renderGrid(); renderCart();
       menuOk=true;
       xuLyDonLink();   // mở từ link đơn Zalo → hiện khung nạp đơn khi đã có danh sách hàng
+      if(!lucKiemGia) setTimeout(kiemGia,3000);   // lần đầu có Menu: hỏi Đồng bộ giá xem còn giá cũ không
     }
   }catch(e){ console.warn('Đồng bộ hàng lỗi:', e); }
   if(!menuOk && !Object.keys(MENU).length){ menuStatus='error'; renderGrid(); }
@@ -2569,7 +2592,6 @@ $('nguonBC').addEventListener('click',e=>{
   nguonBC=b.dataset.nguon; histShown=30; topExpanded=false;
   taiVaVeBaoCao();
 });
-$('btnChot').addEventListener('click',moChot);
 $('reportBody').addEventListener('click',e=>{
   const tg=e.target.closest('[data-top]');
   if(tg){ topMode = tg.dataset.top==='qty' ? 'qty' : 'rev'; refreshTop(); return; }
@@ -2578,7 +2600,8 @@ $('reportBody').addEventListener('click',e=>{
     if(act.dataset.act==='topmore'){ topExpanded=!topExpanded; refreshTop(); }
     else if(act.dataset.act==='histmore'){ histShown+=30; renderHistList(); }
     else if(act.dataset.act==='caimay'){ moCaiMay(); }
-    else if(act.dataset.act==='thulai'){ taiVaVeBaoCao(); }
+    else if(act.dataset.act==='thulai'){ taiVaVeBaoCao(true); }
+    else if(act.dataset.act==='chot'){ moChot(); }
     return;
   }
   const chip=e.target.closest('[data-pay]');
@@ -2620,7 +2643,12 @@ $('chotNgay').addEventListener('change',taiThongTinChot);
 });
 ['mayOverlay','nhanhOverlay','chotOverlay'].forEach(id=>$(id).addEventListener('click',e=>{ if(e.target===$(id)) $(id).classList.remove('show'); }));
 window.addEventListener('online',()=>guiSo());
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden) guiSo(); });
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden) return;
+  guiSo();
+  if(lucKiemGia && Date.now()-lucKiemGia>10*60*1000) kiemGia();   // mở lại app sau hơn 10 phút → hỏi lại giá
+});
+$('giaPill').addEventListener('click',()=>window.open(LINK_DONGBO,'_blank','noopener'));
 setInterval(()=>{ if(MAY && Object.keys(docCho()).length) guiSo(); },60000);
 
 // Đơn từ Zalo
