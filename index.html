@@ -253,6 +253,11 @@
   /* ---------- CHỮ TO, NÚT TO (bật riêng từng máy) ---------- */
   .chu-to-bat{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:13.5px;line-height:1.4;cursor:pointer}
   .chu-to-bat input{flex:none;width:20px;height:20px;accent-color:var(--green-deep)}
+  /* gom link các công cụ (cuối Báo cáo) */
+  .cong-cu{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .cong-cu .cc-td{width:100%;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft)}
+  .cong-cu a{padding:8px 12px;border-radius:10px;background:var(--surface2);color:var(--green-deep);font-size:13px;font-weight:600;text-decoration:none}
+  .cong-cu a:hover{background:#e0d6bd}
   .chu-to .card .emoji{font-size:26px}
   .chu-to .card .name{font-size:17px}
   .chu-to .card .unit{font-size:13px}
@@ -742,6 +747,14 @@
           <button id="btnImport">⬆ Nạp file</button>
           <button id="btnClearData" class="danger">🗑 Xóa lịch sử</button>
           <input type="file" id="importFile" accept="application/json" hidden>
+        </div>
+        <div class="cong-cu">
+          <span class="cc-td">Công cụ</span>
+          <a href="https://bayich2-doichieutoa.vercel.app/" target="_blank" rel="noopener">🧾 Đối chiếu toa</a>
+          <a href="https://bayich2-dongbogia.vercel.app/" target="_blank" rel="noopener">🔄 Đồng bộ giá</a>
+          <a href="https://bayich2-tinhgia.vercel.app/" target="_blank" rel="noopener">🧮 Tính giá</a>
+          <a href="https://vanbaobi-baogia.vercel.app/" target="_blank" rel="noopener">📦 Đặt hàng Vân Bao Bì</a>
+          <a href="https://bayich2.vercel.app/" target="_blank" rel="noopener">🏷 Bảng giá khách</a>
         </div>
         <label class="chu-to-bat"><input type="checkbox" id="bcChuTo" data-chu-to><span><b>Chữ to, nút to</b> trên máy này</span></label>
         <div class="nguon-bc" id="nguonBC" hidden><button data-nguon="chung">‹ Về sổ chung</button><button data-nguon="may">Xem lịch sử riêng máy này ›</button></div>
