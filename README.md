@@ -31,6 +31,22 @@ Cột được tìm theo chữ tiêu đề, đổi thứ tự cột không sao.
 - Deployment (`API_SO` trong index.html): `AKfycbyPQNTjjlOHMY71N8AS8F26UptH3jWlXjcBgmf7sKXsJtPXYNnN7An2obL3JBEpYjzyJg`
 - Cập nhật backend: `clasp push` → `clasp deploy -i <deploymentId>` (link /exec giữ nguyên).
 
+## Bán nhanh
+
+- **💵 Thu đủ** (thanh giỏ dưới đáy / cạnh nút Thanh toán): khách trả vừa đủ tiền mặt → chốt đơn trong một chạm, qua đơn mới
+  ngay. Thanh báo 6 giây có **Phiếu** (in / chia sẻ) và **Hoàn tác** (bấm nhầm → huỷ đơn, hàng quay lại giỏ).
+  Chuyển khoản, giảm giá, khách đưa tiền lớn cần thối → dùng **Thanh toán** như cũ (giảm giá nằm sau "Giảm giá ›").
+- **Chạm vào số lượng** trong giỏ để gõ thẳng số (vd 20); 0 = bỏ món.
+- **Chữ to, nút to**: bật riêng từng máy ở cuối Báo cáo hoặc trong khung "Cài sổ chung cho máy này".
+
+## Cài POS lên điện thoại
+
+- **Android (Chrome):** mở POS → bấm **Cài** ở thanh "📲 Cài POS lên màn hình chính" (hoặc menu ⋮ → Cài đặt ứng dụng).
+- **iPhone (Safari):** bấm **Chia sẻ** ⎋ → **Thêm vào MH chính**. iPhone không chuyển dữ liệu từ Safari sang app vừa thêm:
+  mở app xong bấm **Chưa cài sổ** và nhập lại Mã PIN (đơn còn trong hàng chờ của Safari thì mở Safari một lần cho nó gửi xong).
+- `sw.js` cho app mở được cả khi mất mạng: trang và danh sách hàng lấy mạng trước, mất mạng thì dùng bản đã lưu;
+  không bao giờ lưu các lệnh gửi sổ chung. Đổi `BAN` trong `sw.js` khi đổi cách lưu.
+
 ## Cách POS gửi đơn
 
 Đơn chốt xong vào hàng chờ trong máy rồi tự gửi lên. Mất mạng, Google lỗi hay hết giờ chờ thì cứ để trong hàng chờ

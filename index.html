@@ -6,6 +6,13 @@
 <title>Tạp Hóa Bảy Ích 2 · Bán hàng</title>
 <meta name="description" content="Công cụ bán hàng Tạp Hóa Bảy Ích 2 — chọn hàng, tính tiền, xuất hóa đơn, theo dõi doanh thu.">
 <meta name="theme-color" content="#2f5233">
+<!-- Cài lên màn hình chính như app (Android: nút Cài trong POS · iPhone: Chia sẻ → Thêm vào MH chính) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bán hàng">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%232f5233'/%3E%3Ctext%20x='32'%20y='45'%20font-family='Georgia,serif'%20font-size='38'%20font-weight='700'%20fill='%23e9c46a'%20text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E">
 
@@ -180,7 +187,8 @@
   .item .qty{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
   .item .qty button{width:26px;height:26px;border-radius:8px;background:var(--surface2);color:var(--green-deep);font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--line)}
   .item .qty button:active{transform:scale(.9)}
-  .item .qty .num{font-size:15px;font-weight:700;font-family:'Space Mono',monospace}
+  /* số lượng là nút: chạm để gõ thẳng số (vd 20) */
+  .item .qty button.num{width:auto;min-width:36px;height:30px;padding:0 6px;background:var(--paper);border:1.5px dashed var(--line);color:var(--ink);font-size:15px;font-family:'Space Mono',monospace}
   .item .info{flex:1;min-width:0}
   .item .info .n{font-size:14px;font-weight:600;line-height:1.3}
   .item .info .u{font-size:13px;color:var(--green-deep);font-family:'Fraunces',serif;font-weight:700;margin-top:2px}
@@ -194,7 +202,7 @@
   .sum-row{display:flex;justify-content:space-between;font-size:14px;color:var(--ink-soft);margin-bottom:6px}
   .sum-row.total{font-size:17px;color:var(--ink);font-weight:700;margin:8px 0 14px}
   .sum-row.total span:last-child{font-family:'Fraunces',serif;color:var(--green-deep)}
-  .actions{display:grid;grid-template-columns:auto 1fr;gap:10px}
+  .actions{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px}
   .btn{padding:13px;border-radius:12px;font-size:15px;font-weight:700;transition:.15s;text-align:center}
   .btn-clear{background:var(--surface2);color:var(--ink-soft);padding:13px 18px}
   .btn-clear:hover{background:#e0d6bd}
@@ -205,16 +213,60 @@
   .btn-ghost:hover{background:#e0d6bd}
   .btn-print{background:var(--rice);color:var(--green-deep)}
   .btn-print:hover{background:var(--rice-dark)}
+  .btn-thu{background:var(--rice);color:var(--green-deep)}
+  .btn-thu:hover{background:var(--rice-dark)}
+  .btn-thu:disabled{opacity:.45;cursor:not-allowed}
 
-  /* ---------- MOBILE CART BAR ---------- */
-  .cart-bar{
-    display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:150;
-    padding:14px 18px;border-radius:16px;background:linear-gradient(135deg,var(--green),var(--green-deep));
-    color:#fff;font-size:15px;font-weight:700;align-items:center;justify-content:space-between;
-    box-shadow:0 6px 20px rgba(47,82,51,.4);
-  }
+  /* ---------- MOBILE CART BAR: Xem đơn | 💵 Thu đủ ---------- */
+  .cart-bar{display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:150;gap:8px;align-items:stretch}
+  .cart-bar button{border-radius:16px;font-size:15px;font-weight:700;box-shadow:0 6px 20px rgba(47,82,51,.4);transition:transform .1s}
+  .cart-bar button:active{transform:scale(.97)}
+  .cart-bar .cb-xem{flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 16px;
+    background:linear-gradient(135deg,var(--green),var(--green-deep));color:#fff}
   .cart-bar .cb-count{background:var(--rice);color:var(--green-deep);border-radius:50%;min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;margin-right:4px}
-  .cart-bar .cb-go{opacity:.85;font-weight:600;font-size:13px}
+  .cart-bar .cb-go{opacity:.85;font-weight:600;font-size:13px;white-space:nowrap}
+  .cart-bar .cb-thu{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 16px;line-height:1.2;background:var(--rice);color:var(--green-deep)}
+  .cart-bar .cb-thu small{font-size:12px;font-weight:700}
+  .cart-bar .cb-thu b{font-family:'Fraunces',serif;font-size:16px;white-space:nowrap}
+
+  /* ---------- THANH BÁO SAU "THU ĐỦ": Phiếu · Hoàn tác ---------- */
+  .snack{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:700;display:flex;align-items:center;gap:4px;
+    width:max-content;max-width:calc(100vw - 24px);padding:6px 6px 6px 16px;border-radius:14px;background:var(--ink);color:#fff;
+    font-size:14px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.3);animation:sheetIn .2s ease}
+  .snack .sn-chu{flex:1;min-width:0;line-height:1.35}
+  .snack button{flex:none;padding:10px 12px;border-radius:10px;font-size:14px;font-weight:700;color:var(--rice)}
+  .snack button:hover{background:rgba(255,255,255,.1)}
+
+  /* ---------- SỐ LƯỢNG: gõ thẳng số ---------- */
+  .sl-o{width:100%;height:64px;border:2px solid var(--line);border-radius:14px;text-align:center;font-family:'Space Mono',monospace;font-size:32px;font-weight:700;background:var(--bg);color:var(--ink)}
+  .sl-o:focus{outline:none;border-color:var(--green)}
+  .sl-nhanh{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+  .sl-nhanh button{padding:12px 0;border-radius:10px;background:var(--surface2);font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--ink)}
+  .sl-nhanh button:hover{background:var(--rice);color:var(--green-deep)}
+
+  /* ---------- MỜI CÀI APP ---------- */
+  .cai-app{display:flex;align-items:center;gap:8px;margin:10px 24px 0;padding:8px 8px 8px 14px;border-radius:12px;background:#fbf1dd;border:1px solid #ecd9ac;color:#6b4f12;font-size:13px;line-height:1.4;flex-shrink:0}
+  .cai-app .ca-chu{flex:1;min-width:0}
+  .cai-app .ca-nut{flex:none;padding:8px 14px;border-radius:10px;background:var(--green-deep);color:#fff;font-weight:700;font-size:13px}
+  .cai-app .ca-dong{flex:none;width:32px;height:32px;border-radius:8px;color:#8a6d1f;font-size:14px}
+
+  /* ---------- CHỮ TO, NÚT TO (bật riêng từng máy) ---------- */
+  .chu-to-bat{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:13.5px;line-height:1.4;cursor:pointer}
+  .chu-to-bat input{flex:none;width:20px;height:20px;accent-color:var(--green-deep)}
+  .chu-to .card .emoji{font-size:26px}
+  .chu-to .card .name{font-size:17px}
+  .chu-to .card .unit{font-size:13px}
+  .chu-to .card .price{font-size:19px}
+  .chu-to .item .info .n{font-size:16.5px}
+  .chu-to .item .info .u{font-size:15px}
+  .chu-to .item .line-total{font-size:17px}
+  .chu-to .item .qty button{width:44px;height:44px;font-size:22px}
+  .chu-to .item .qty button.num{height:38px;min-width:44px;font-size:18px}
+  .chu-to .cart-bar .cb-xem{font-size:17px;padding:16px 18px}
+  .chu-to .cart-bar .cb-thu b{font-size:19px}
+  .chu-to .cash-grid button{font-size:17px;padding:15px 4px}
+  .chu-to .btn{font-size:17px}
+  .chu-to .snack{font-size:16px}
   .sheet-backdrop{display:none}
 
   /* ---------- OVERLAY / MODAL ---------- */
@@ -256,6 +308,8 @@
   .disc-quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .disc-quick button{padding:6px 12px;border-radius:16px;font-size:13px;font-weight:600;background:var(--surface2);color:var(--ink-soft)}
   .disc-quick button:hover{background:var(--rice);color:var(--green-deep)}
+  .disc-mo{margin-left:8px;font-size:13px;font-weight:700;color:var(--green-deep)}
+  #discKhoi{margin-bottom:4px}
 
   .pay-methods{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 22px 6px}
   .pay-methods button{padding:12px;border-radius:12px;font-size:14px;font-weight:700;background:var(--surface2);color:var(--ink-soft);border:2px solid transparent}
@@ -487,7 +541,10 @@
       background:var(--surface2);color:var(--ink);font-size:18px;align-items:center;justify-content:center;z-index:4;
     }
     .order-head{padding-top:22px}
-    .cart-bar{display:flex;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+    .cart-bar{display:flex;bottom:calc(12px + env(safe-area-inset-bottom))}
+    .snack{bottom:calc(78px + env(safe-area-inset-bottom))}
+    .item .qty button{width:36px;height:36px;font-size:19px}
+    .cai-app{margin:10px 16px 0}
     .summary{padding-bottom:calc(18px + env(safe-area-inset-bottom))}
     .grid-wrap{padding-bottom:96px}
     .modal{max-height:90vh}
@@ -536,6 +593,11 @@
         <button class="s-clear" id="searchClear" aria-label="Xoá tìm kiếm" hidden>✕</button>
       </div>
     </div>
+    <div class="cai-app" id="caiApp" hidden>
+      <span class="ca-chu" id="caiAppChu">📲 Cài POS lên màn hình chính — mở nhanh như app</span>
+      <button class="ca-nut" id="btnCaiApp">Cài</button>
+      <button class="ca-dong" id="btnCaiAppDong" aria-label="Ẩn lời mời cài app">✕</button>
+    </div>
     <div class="cats-wrap"><nav class="cats" id="cats"></nav></div>
     <div class="grid-wrap"><div class="grid" id="grid"></div></div>
   </section>
@@ -556,16 +618,17 @@
       <div class="actions">
         <button class="btn btn-clear" id="btnClear">Xóa</button>
         <button class="btn btn-pay" id="btnPay" disabled>Thanh toán</button>
+        <button class="btn btn-thu" id="btnThuDu" disabled title="Khách trả vừa đủ tiền mặt — chốt đơn ngay">💵 Thu đủ</button>
       </div>
     </div>
   </aside>
 </div>
 
 <!-- MOBILE CART BAR -->
-<button class="cart-bar" id="cartBar">
-  <span><span class="cb-count" id="cbCount">0</span> món</span>
-  <span><span id="cbTotal">0đ</span> <span class="cb-go">Xem đơn ›</span></span>
-</button>
+<div class="cart-bar" id="cartBar">
+  <button class="cb-xem" id="cbXem"><span><span class="cb-count" id="cbCount">0</span> món</span><span class="cb-go">Xem đơn ›</span></button>
+  <button class="cb-thu" id="cbThu" hidden aria-label="Thu đủ tiền mặt, chốt đơn ngay"><small>💵 Thu đủ</small><b id="cbTotal">0đ</b></button>
+</div>
 <div class="sheet-backdrop" id="sheetBackdrop"></div>
 
 <!-- GHI CHÚ DÒNG -->
@@ -582,21 +645,36 @@
   </div>
 </div>
 
+<!-- SỐ LƯỢNG — chạm vào số trong giỏ để gõ thẳng -->
+<div class="overlay" id="slOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="slTitle">Số lượng</h3><p id="slSub"></p></div>
+    <div class="modal-body">
+      <input type="text" id="slInput" class="sl-o" inputmode="numeric" autocomplete="off" aria-label="Số lượng">
+      <div class="sl-nhanh" id="slNhanh"><button data-sln="5">5</button><button data-sln="10">10</button><button data-sln="20">20</button><button data-sln="50">50</button><button data-sln="100">100</button></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" id="btnSlHuy">Hủy</button><button class="btn btn-pay" id="btnSlLuu">Lưu</button></div>
+  </div>
+</div>
+
 <!-- THANH TOÁN -->
 <div class="overlay" id="payOverlay">
   <div class="modal">
     <div class="modal-head">
       <h3>Thanh toán</h3>
       <div class="disc-box">
-        <div class="disc-row"><span>Tạm tính</span><span id="paySub">0đ</span></div>
-        <div class="disc-input">
-          <div class="disc-type" id="discType">
-            <button data-dt="amount" class="on">đ</button>
-            <button data-dt="percent">%</button>
+        <div class="disc-row"><span>Tạm tính</span><span><span id="paySub">0đ</span><button type="button" class="disc-mo" id="discMo">· Giảm giá ›</button></span></div>
+        <!-- giảm giá hiếm dùng → thu gọn, chạm "Giảm giá ›" mới mở -->
+        <div id="discKhoi" hidden>
+          <div class="disc-input">
+            <div class="disc-type" id="discType">
+              <button data-dt="amount" class="on">đ</button>
+              <button data-dt="percent">%</button>
+            </div>
+            <input id="discInput" inputmode="numeric" placeholder="Giảm giá (0)">
           </div>
-          <input id="discInput" inputmode="numeric" placeholder="Giảm giá (0)">
+          <div class="disc-quick" id="discQuick"></div>
         </div>
-        <div class="disc-quick" id="discQuick"></div>
         <div class="disc-row total"><span>Cần thu</span><span id="payTotal">0đ</span></div>
       </div>
     </div>
@@ -665,6 +743,7 @@
           <button id="btnClearData" class="danger">🗑 Xóa lịch sử</button>
           <input type="file" id="importFile" accept="application/json" hidden>
         </div>
+        <label class="chu-to-bat"><input type="checkbox" id="bcChuTo" data-chu-to><span><b>Chữ to, nút to</b> trên máy này</span></label>
         <div class="nguon-bc" id="nguonBC" hidden><button data-nguon="chung">‹ Về sổ chung</button><button data-nguon="may">Xem lịch sử riêng máy này ›</button></div>
       </div>
     </div>
@@ -721,6 +800,7 @@
         <p class="qr-hint" style="text-align:left">Số phiếu máy này thành Q00012, máy khác M00012… nên không trùng nhau.</p></div>
       <div class="field"><label for="mayPin">Mã PIN chung</label><input type="password" id="mayPin" class="o-chu" inputmode="numeric" maxlength="12" autocomplete="off">
         <p class="qr-hint" style="text-align:left">Xem ô "Mã PIN chung" ở tab CauHinh trong Google Sheet bayich2.</p></div>
+      <label class="chu-to-bat"><input type="checkbox" id="mayChuTo" data-chu-to><span><b>Chữ to, nút to</b> — dễ đọc, dễ bấm trên máy này</span></label>
       <p class="may-loi" id="mayLoi" role="alert"></p>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" id="btnMayHuy">Để sau</button><button class="btn btn-pay" id="btnMayLuu">Lưu</button></div>
@@ -774,6 +854,11 @@
 </div>
 
 <div id="toast"></div>
+<div class="snack" id="snack" role="status" aria-live="polite" hidden>
+  <span class="sn-chu" id="snackChu"></span>
+  <button id="btnSnackPhieu">Phiếu</button>
+  <button id="btnSnackHoan">Hoàn tác</button>
+</div>
 
 
 <script>
@@ -1034,7 +1119,7 @@ function renderCart(){
       return `<div class="item">
         <div class="qty">
           <button data-inc="${esc(k)}">+</button>
-          <span class="num">${i.qty}</span>
+          <button class="num" data-sl="${esc(k)}" aria-label="Sửa số lượng ${esc(i.n)}">${i.qty}</button>
           <button data-dec="${esc(k)}">−</button>
         </div>
         <div class="info">
@@ -1053,8 +1138,10 @@ function renderCart(){
   $('totalQty').textContent=qty;
   $('totalAmt').textContent=money(amt);
   $('btnPay').disabled = qty===0;
+  $('btnThuDu').disabled = qty===0;
   $('cbCount').textContent=qty;
   $('cbTotal').textContent=money(amt);
+  $('cbThu').hidden = qty===0;
   $('billNo').textContent=billLabel(billCounter);
 }
 
@@ -1075,6 +1162,35 @@ function saveNote(){
   }
   $('noteOverlay').classList.remove('show'); noteTargetKey=null;
 }
+
+/* ------------- SỐ LƯỢNG: chạm vào số trong giỏ để gõ thẳng (vd 20 thùng) -------------
+   Chỉ nhận số nguyên 0–9999 (đúng giới hạn sổ chung và link đơn Zalo); 0 = bỏ món. */
+let slKey=null;
+function moSoLuong(key){
+  const i=cart[key]; if(!i) return;
+  slKey=key;
+  $('slTitle').textContent='Số lượng · '+i.n;
+  $('slSub').textContent=fmt(i.p)+'đ'+(i.u?' / '+i.u:'');
+  $('slInput').value=String(i.qty);
+  veNutSl();
+  $('slOverlay').classList.add('show');
+  setTimeout(()=>{ const o=$('slInput'); o.focus(); o.select(); },80);
+}
+function docSl(){ const raw=($('slInput').value||'').replace(/\D/g,''); return raw===''?null:parseInt(raw,10); }
+function veNutSl(){
+  const n=docSl(), nut=$('btnSlLuu');
+  nut.textContent = n===0 ? 'Bỏ món' : 'Lưu';
+  nut.disabled = n==null || n>9999;
+}
+function luuSoLuong(){
+  const n=docSl();
+  if(slKey && cart[slKey] && n!=null && n<=9999){
+    if(n===0) delete cart[slKey]; else cart[slKey].qty=n;
+    persistCart(); renderGrid(); renderCart();
+  }
+  dongSoLuong();
+}
+function dongSoLuong(){ $('slOverlay').classList.remove('show'); slKey=null; }
 
 /* ------------- THANH TOÁN ------------- */
 let payMethod='cash';
@@ -1139,6 +1255,7 @@ function renderQR(){
 function openPay(){
   if(!Object.keys(cart).length) return;
   payDiscType='amount'; payDiscVal=0;
+  $('discKhoi').hidden=true; $('discMo').hidden=false;   // giảm giá thu gọn mỗi lần mở
   $('discInput').value=''; $('discInput').placeholder='Giảm giá (0)';
   [...$('discType').children].forEach(x=>x.classList.toggle('on', x.dataset.dt==='amount'));
   $('cashInput').value='';
@@ -1152,15 +1269,17 @@ function openPay(){
 /* ------------- CHỐT ĐƠN ------------- */
 let lastSale=null;     // đơn vừa chốt (để xuất hóa đơn)
 let viewingHistory=false;
-function finalizeSale(){
-  if(!Object.keys(cart).length) return;
-  $('btnConfirmPay').disabled=true;
-  const {qty, sub, disc, amt}=orderTotals();
-  const cashGiven = payMethod==='cash' ? parseCash() : 0;
+/* Lõi chốt đơn — dùng cho "Xác nhận & In" (khung Thanh toán) và "💵 Thu đủ" (một chạm).
+   Tổng tính lại từ giỏ + số giảm truyền vào, không dùng giảm giá còn sót từ lần mở khung Thanh toán trước. */
+function chotDon({ method, cash, disc }){
+  if(!Object.keys(cart).length) return null;
+  const {qty, amt:sub}=cartTotals();
+  disc=Math.max(0, Math.min(disc||0, sub));
+  const amt=sub-disc, cashGiven = method==='cash' ? (cash||0) : 0;
   const sale={
     bill: billLabel(billCounter),
     ts: Date.now(),
-    method: payMethod,
+    method,
     qty, amt, sub, disc,
     cash: cashGiven,
     change: cashGiven>amt ? cashGiven-amt : 0,
@@ -1176,17 +1295,49 @@ function finalizeSale(){
   cart={}; persistCart(); renderGrid(); renderCart();
   billCounter++; saveCounter();
   $('billNo').textContent=billLabel(billCounter);
-
-  $('payOverlay').classList.remove('show');
-  $('btnConfirmPay').disabled=false;
   closeSheet();
-
-  // Xác nhận & In → mở thẳng phiếu (giống Q Zone), không hỏi mẫu trước
+  return sale;
+}
+/* Mở màn phiếu của một đơn vừa chốt (in / chia sẻ / điền tên khách) */
+function moPhieuDon(sale){
   viewingHistory=false;
   dsChiTiet=sales;
-  currentSaleIdx=sales.length-1;
+  currentSaleIdx=sales.indexOf(sale);
   renderSaleDetail();
   $('saleOverlay').classList.add('show');
+}
+function finalizeSale(){
+  if(!Object.keys(cart).length) return;
+  $('btnConfirmPay').disabled=true;
+  const s=chotDon({ method:payMethod, cash:parseCash(), disc:orderTotals().disc });
+  $('payOverlay').classList.remove('show');
+  $('btnConfirmPay').disabled=false;
+  if(s) moPhieuDon(s);   // Xác nhận & In → mở thẳng phiếu (giống Q Zone), không hỏi mẫu trước
+}
+
+/* 💵 Thu đủ: khách trả vừa đủ tiền mặt → chốt ngay, không mở khung Thanh toán, không mở phiếu.
+   Thanh báo 6 giây: "Phiếu" (in / chia sẻ) và "Hoàn tác" (bấm nhầm → huỷ đơn, trả hàng về giỏ). */
+let donSnack=null, hgSnack=null;
+function thuDu(){
+  if(!Object.keys(cart).length) return;
+  const s=chotDon({ method:'cash', cash:cartTotals().amt, disc:0 });
+  if(!s) return;
+  if(navigator.vibrate) navigator.vibrate([20,40,20]);
+  donSnack=s;
+  $('snackChu').textContent='✓ Đã thu '+money(s.amt)+' · '+s.bill;
+  $('snack').hidden=false;
+  clearTimeout(hgSnack); hgSnack=setTimeout(anSnack,6000);
+}
+function anSnack(){ clearTimeout(hgSnack); $('snack').hidden=true; donSnack=null; }
+function hoanTac(){
+  const s=donSnack; anSnack();
+  if(!s || s.void) return;
+  s.void=true; persistSales(); choGui(s);   // huỷ đơn — lên sổ chung giống "Hủy đơn" trong Báo cáo
+  cart={};
+  s.items.forEach(i=>{ cart[i.n]={ n:i.n, u:i.u||'', p:i.p, qty:(cart[i.n]?cart[i.n].qty:0)+i.q, note:i.note||'' }; });
+  nguonDon=s.nguon||'pos';
+  persistCart(); renderGrid(); renderCart();
+  toast('Đã hoàn tác — đơn '+s.bill+' huỷ, hàng trả lại giỏ');
 }
 
 /* ============================================================
@@ -2501,10 +2652,27 @@ $('items').addEventListener('click',e=>{
   if(b.dataset.inc) changeQty(b.dataset.inc,+1);
   if(b.dataset.dec) changeQty(b.dataset.dec,-1);
   if(b.dataset.note) openNoteEditor(b.dataset.note);
+  if(b.dataset.sl) moSoLuong(b.dataset.sl);
 });
 $('btnNoteSave').addEventListener('click',saveNote);
 $('btnNoteCancel').addEventListener('click',()=>{ $('noteOverlay').classList.remove('show'); noteTargetKey=null; });
 $('noteOverlay').addEventListener('click',e=>{ if(e.target===$('noteOverlay')){ $('noteOverlay').classList.remove('show'); noteTargetKey=null; } });
+
+// Số lượng gõ thẳng
+$('slInput').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/\D/g,'').slice(0,5); veNutSl(); });
+$('slInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); if(!$('btnSlLuu').disabled) luuSoLuong(); } });
+$('slNhanh').addEventListener('click',e=>{ const b=e.target.closest('[data-sln]'); if(!b) return; $('slInput').value=b.dataset.sln; veNutSl(); luuSoLuong(); });
+$('btnSlLuu').addEventListener('click',luuSoLuong);
+$('btnSlHuy').addEventListener('click',dongSoLuong);
+$('slOverlay').addEventListener('click',e=>{ if(e.target===$('slOverlay')) dongSoLuong(); });
+
+// 💵 Thu đủ + thanh báo
+$('btnThuDu').addEventListener('click',thuDu);
+$('btnSnackHoan').addEventListener('click',hoanTac);
+$('btnSnackPhieu').addEventListener('click',()=>{ const s=donSnack; anSnack(); if(s) moPhieuDon(s); });
+
+// Giảm giá thu gọn
+$('discMo').addEventListener('click',()=>{ $('discKhoi').hidden=false; $('discMo').hidden=true; $('discInput').focus(); });
 
 $('btnClear').addEventListener('click',()=>{
   if(!Object.keys(cart).length) return;
@@ -2660,8 +2828,9 @@ $('donOverlay').addEventListener('click',e=>{
 });
 window.addEventListener('hashchange',xuLyDonLink);
 
-// Mobile sheet
-$('cartBar').addEventListener('click',openSheet);
+// Mobile sheet — thanh giỏ: "Xem đơn" mở giỏ, "💵 Thu đủ" chốt luôn
+$('cbXem').addEventListener('click',openSheet);
+$('cbThu').addEventListener('click',thuDu);
 $('sheetClose').addEventListener('click',closeSheet);
 $('sheetBackdrop').addEventListener('click',closeSheet);
 
@@ -2673,9 +2842,53 @@ document.addEventListener('keydown',e=>{
   if($('app').classList.contains('sheet-open')) closeSheet();
 });
 
+/* ------------- CHỮ TO, NÚT TO (riêng từng máy) ------------- */
+const CHU_TO_KEY='b2pos_chu_to';
+function datChuTo(bat){
+  document.documentElement.classList.toggle('chu-to',bat);
+  document.querySelectorAll('[data-chu-to]').forEach(o=>{ o.checked=bat; });
+  try{ localStorage.setItem(CHU_TO_KEY, bat?'1':'0'); }catch(e){}
+}
+document.querySelectorAll('[data-chu-to]').forEach(o=>o.addEventListener('change',()=>datChuTo(o.checked)));
+
+/* ------------- CÀI LÊN MÀN HÌNH CHÍNH (PWA) -------------
+   Android/Chrome: bắt beforeinstallprompt → nút "Cài". iPhone: không có hộp cài tự động → hướng dẫn Chia sẻ → Thêm vào MH chính
+   (iPhone không chia sẻ dữ liệu giữa Safari và app đã thêm → mở app xong phải cài sổ lại). Đã là app / trong Zalo thì không hiện. */
+const AN_CAI_KEY='b2pos_an_cai';
+const laApp=()=>matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+const laIPhone=()=>/iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+let hoiCai=null;   // sự kiện beforeinstallprompt giữ lại để bấm "Cài" mới hỏi
+function veCaiApp(){
+  let an=false; try{ an=localStorage.getItem(AN_CAI_KEY)==='1'; }catch(e){}
+  const b=$('caiApp');
+  if(an || laApp() || trongZalo()){ b.hidden=true; return; }
+  if(hoiCai){
+    $('caiAppChu').textContent='📲 Cài POS lên màn hình chính — mở nhanh như app';
+    $('btnCaiApp').hidden=false; b.hidden=false; return;
+  }
+  if(laIPhone()){
+    $('caiAppChu').innerHTML='📲 Thêm POS vào màn hình chính: bấm <b>Chia sẻ</b> ⎋ → <b>Thêm vào MH chính</b>. Mở app xong bấm "Chưa cài sổ" và nhập lại Mã PIN (iPhone không chuyển dữ liệu từ Safari sang).';
+    $('btnCaiApp').hidden=true; b.hidden=false; return;
+  }
+  b.hidden=true;
+}
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); hoiCai=e; veCaiApp(); });
+window.addEventListener('appinstalled',()=>{ hoiCai=null; $('caiApp').hidden=true; toast('Đã cài POS lên màn hình chính'); });
+$('btnCaiApp').addEventListener('click',async()=>{
+  if(!hoiCai) return;
+  hoiCai.prompt();
+  try{ await hoiCai.userChoice; }catch(e){}
+  hoiCai=null; veCaiApp();
+});
+$('btnCaiAppDong').addEventListener('click',()=>{ try{ localStorage.setItem(AN_CAI_KEY,'1'); }catch(e){} $('caiApp').hidden=true; });
+
 /* ============================================================
    KHỞI TẠO
    ============================================================ */
+try{ if(localStorage.getItem(CHU_TO_KEY)==='1') datChuTo(true); }catch(e){}
+veCaiApp();
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost'))
+  navigator.serviceWorker.register('sw.js').catch(e=>console.warn('Không đăng ký được service worker:', e));
 renderCats(); renderGrid(); renderCart(); tick();
 setInterval(tick,1000*30);
 loadFromSheet(false);
