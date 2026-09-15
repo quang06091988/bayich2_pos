@@ -417,6 +417,21 @@
   }
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* ---------- ĐƠN TỪ ZALO ---------- */
+  .don-canh{border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:12px;background:#fbf1dd;color:#7a5a12;border:1px solid #ecd9ac}
+  .don-canh.do{background:#fbeae7;color:var(--danger);border-color:#eec6c2}
+  .don-canh .btn{margin-top:8px;padding:8px 12px;font-size:13px}
+  .don-dong{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .don-dong:last-child{border-bottom:none}
+  .don-dong .ten{flex:1;min-width:0;font-weight:600;line-height:1.35}
+  .don-dong .ten small{display:block;font-size:12px;font-weight:400;color:var(--ink-soft);margin-top:2px}
+  .don-dong .tien{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap;text-align:right}
+  .don-dong .doi{display:block;font-family:'Be Vietnam Pro',sans-serif;font-size:11.5px;font-weight:600;color:var(--danger)}
+  .don-nhom{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--danger);margin:14px 0 2px}
+  .don-tong{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:16px;margin-top:12px;padding-top:10px;border-top:2px dashed var(--line)}
+  .don-tong span:last-child{font-family:'Fraunces',serif;color:var(--green-deep)}
+  .don-khach{font-size:12.5px;color:var(--ink-soft);text-align:right;margin-top:4px}
+
   /* ---------- RESPONSIVE ---------- */
   @media(max-width:860px){
     .app{grid-template-columns:1fr}
@@ -682,6 +697,18 @@
         <button class="btn btn-ghost" id="btnMenuOpen">Mở trang</button>
         <button class="btn btn-print" id="btnMenuCopy">Sao chép link</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ĐƠN TỪ ZALO — mở từ link #don=… trong tin nhắn đơn của trang bảng giá -->
+<div class="overlay" id="donOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3>Đơn từ Zalo</h3><p id="donSub"></p></div>
+    <div class="modal-body" id="donBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="btnDonBo">Bỏ qua</button>
+      <button class="btn btn-pay" id="btnDonNap">Nạp vào đơn</button>
     </div>
   </div>
 </div>
@@ -1465,6 +1492,94 @@ function fallbackCopyMenu(t, done){
   document.body.removeChild(ta);
 }
 
+/* ------------- ĐƠN TỪ ZALO -------------
+   Trang bảng giá gắn link …/#don=<base64url của JSON> vào tin nhắn đơn. Bấm link → khung "Đơn từ Zalo" để nạp vào giỏ.
+   JSON: {v:1, id, h:'q'|'s', t: tổng khách thấy, i:[[tên, SL, giá khách thấy, ghi chú?], …]}
+   Không có tên/SĐT/địa chỉ khách (đã có trong tin nhắn). Giá tính theo Menu hiện tại; chỗ lệch chỉ để báo. */
+const DA_NAP_KEY='b2pos_don_da_nap';
+const trongZalo=()=>/zalo/i.test(navigator.userAgent);
+let donDangXem=null;
+function b64urlDecode(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; const bin=atob(s); return new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0))); }
+function giaiMaDon(ma){
+  try{
+    const d=JSON.parse(b64urlDecode(ma));
+    if(!d || d.v!==1 || !Array.isArray(d.i)) return 'loi';
+    const i=d.i.slice(0,100).map(x=>({
+      n:String((x&&x[0])||'').trim().slice(0,80),
+      q:Math.round(+(x&&x[1])||0),
+      p:Math.round(+(x&&x[2])||0),
+      note:String((x&&x[3])||'').slice(0,120)
+    })).filter(x=>x.n && x.q>=1 && x.q<=9999);
+    if(!i.length) return 'loi';
+    return { id:String(d.id||'').slice(0,40), h:d.h==='s'?'s':'q', t:Math.round(+d.t||0), i };
+  }catch(e){ return 'loi'; }
+}
+function docDonTuLink(){
+  const m=(location.hash+'&'+location.search).match(/[#&?]don=([A-Za-z0-9_-]+)/);
+  return m ? giaiMaDon(m[1]) : null;
+}
+function xoaDonKhoiLink(){ if(/[#&?]don=/.test(location.hash+location.search)) history.replaceState(null,'',location.pathname); }
+function docDaNap(){ try{ return JSON.parse(localStorage.getItem(DA_NAP_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function ghiDaNap(id){
+  if(!id) return;
+  const m=docDaNap(); m[id]=Date.now();
+  const giu={}; Object.keys(m).sort((a,b)=>m[b]-m[a]).slice(0,50).forEach(k=>{ giu[k]=m[k]; });
+  try{ localStorage.setItem(DA_NAP_KEY, JSON.stringify(giu)); }catch(e){}
+}
+function xuLyDonLink(){
+  const d=docDonTuLink(); if(!d) return;
+  if(d==='loi'){ xoaDonKhoiLink(); toast('Link đơn bị hỏng — nhờ khách bấm "Gửi đơn qua Zalo" lại'); return; }
+  if(menuStatus!=='ready') return;   // chờ tải xong danh sách hàng — loadFromSheet sẽ gọi lại
+  moKhungDon(d);
+}
+function moKhungDon(d){
+  const theoTen={};
+  for(const c in MENU) for(const it of MENU[c]) theoTen[normVN(it.n).trim()]=it;
+  const ok=[], hong=[];
+  d.i.forEach(x=>{
+    const it=theoTen[normVN(x.n).trim()];
+    if(!it) hong.push({ ...x, lyDo:'không còn trong danh sách hàng' });
+    else if(it.so) hong.push({ ...x, lyDo:'đang hết hàng' });
+    else ok.push({ it, q:x.q, pKhach:x.p, note:x.note });
+  });
+  donDangXem={ d, ok };
+  const tong=ok.reduce((s,x)=>s+x.q*x.it.p,0);
+  const p=n=>String(n).padStart(2,'0');
+  let h='';
+  if(trongZalo()) h+=`<div class="don-canh">Đang mở trong Zalo — đơn chốt ở đây lưu riêng, không chung với POS trong Chrome. Bấm <b>⋯</b> ở góc trên → <b>Mở bằng trình duyệt</b>.<br><button class="btn btn-ghost" id="btnDonChep">Sao chép link</button></div>`;
+  const lucNap=docDaNap()[d.id];
+  if(lucNap){ const t=new Date(lucNap); h+=`<div class="don-canh do">Đơn này đã nạp lúc ${p(t.getHours())}:${p(t.getMinutes())} ngày ${p(t.getDate())}/${p(t.getMonth()+1)}. Nạp lại sẽ thành thêm một đơn.</div>`; }
+  const dangCo=Object.keys(cart).length;
+  if(dangCo) h+=`<div class="don-canh">Đơn đang nhập dở (${dangCo} món) sẽ được thay bằng đơn này.</div>`;
+  h+=ok.map(x=>`<div class="don-dong"><span class="ten">${esc(x.it.n)}${x.note?`<small>✎ ${esc(x.note)}</small>`:''}</span>
+    <span class="tien">${fmt(x.q)} × ${fmt(x.it.p)}${x.pKhach&&x.pKhach!==x.it.p?`<span class="doi">khách thấy ${fmt(x.pKhach)}</span>`:''}</span></div>`).join('');
+  if(hong.length) h+=`<div class="don-nhom">Không nạp được</div>`+hong.map(x=>`<div class="don-dong"><span class="ten">${esc(x.n)}<small>${esc(x.lyDo)}</small></span><span class="tien">${fmt(x.q)}</span></div>`).join('');
+  h+=`<div class="don-tong"><span>Tổng theo giá hiện tại</span><span>${money(tong)}</span></div>`;
+  if(d.t && d.t!==tong) h+=`<div class="don-khach">Khách thấy ${money(d.t)} · chênh ${tong>d.t?'+':'−'}${money(Math.abs(tong-d.t))}</div>`;
+  $('donSub').textContent=`${ok.length} món · khách chọn ${d.h==='s'?'giao tận nơi':'lấy tại tiệm'}`;
+  $('donBody').innerHTML=h;
+  $('btnDonNap').disabled=!ok.length;
+  $('btnDonNap').textContent=trongZalo()?'Vẫn nạp ở đây':'Nạp vào đơn';
+  $('donOverlay').classList.add('show');
+}
+function napDon(){
+  if(!donDangXem) return;
+  const { d, ok }=donDangXem;
+  cart={};
+  ok.forEach(x=>{ cart[x.it.n]={ n:x.it.n, u:x.it.u||'', p:x.it.p, qty:(cart[x.it.n]?cart[x.it.n].qty:0)+x.q, note:x.note||'' }; });
+  persistCart(); renderGrid(); renderCart();
+  ghiDaNap(d.id);
+  dongKhungDon();
+  openSheet();
+  toast(`Đã nạp ${ok.length} món từ Zalo`);
+}
+function dongKhungDon(){ $('donOverlay').classList.remove('show'); donDangXem=null; xoaDonKhoiLink(); }
+function chepLinkDon(){
+  const t=location.href, xong=()=>toast('Đã sao chép — mở Chrome rồi dán vào ô địa chỉ');
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(xong).catch(()=>fallbackCopyMenu(t, xong));
+  else fallbackCopyMenu(t, xong);
+}
+
 /* ------------- TOAST ------------- */
 let toastTimer;
 function toast(msg){
@@ -2011,6 +2126,7 @@ async function loadFromSheet(manual){
       if(!MENU[activeCat]) activeCat=Object.keys(MENU)[0];
       renderCats(); renderGrid(); renderCart();
       menuOk=true;
+      xuLyDonLink();   // mở từ link đơn Zalo → hiện khung nạp đơn khi đã có danh sách hàng
     }
   }catch(e){ console.warn('Đồng bộ hàng lỗi:', e); }
   if(!menuOk && !Object.keys(MENU).length){ menuStatus='error'; renderGrid(); }
@@ -2169,6 +2285,15 @@ $('importFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(f) 
 $('btnClearData').addEventListener('click',()=>{
   if(confirm('Xóa toàn bộ lịch sử bán hàng? Không thể hoàn tác.')){ sales=[]; persistSales(); renderReport(); toast('Đã xóa lịch sử'); }
 });
+
+// Đơn từ Zalo
+$('btnDonNap').addEventListener('click',napDon);
+$('btnDonBo').addEventListener('click',dongKhungDon);
+$('donOverlay').addEventListener('click',e=>{
+  if(e.target===$('donOverlay')){ dongKhungDon(); return; }
+  if(e.target.closest('#btnDonChep')) chepLinkDon();
+});
+window.addEventListener('hashchange',xuLyDonLink);
 
 // Mobile sheet
 $('cartBar').addEventListener('click',openSheet);
