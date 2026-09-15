@@ -748,7 +748,7 @@
           <button id="btnClearData" class="danger">🗑 Xóa lịch sử</button>
           <input type="file" id="importFile" accept="application/json" hidden>
         </div>
-        <div class="cong-cu">
+        <div class="cong-cu" hidden>
           <span class="cc-td">Công cụ</span>
           <a href="https://bayich2-doichieutoa.vercel.app/" target="_blank" rel="noopener">🧾 Đối chiếu toa</a>
           <a href="https://bayich2-dongbogia.vercel.app/" target="_blank" rel="noopener">🔄 Đồng bộ giá</a>
@@ -1777,12 +1777,13 @@ function veSoPill(){
    Mỗi lần một lượt, hạn 25 giây; lỗi thì im lặng ẩn nút — không bao giờ cản việc bán. */
 let lucKiemGia=0, dangKiemGia=false;
 async function kiemGia(){
+  if(!MAY){ $('giaPill').hidden=true; return; }   // xem giá cần Mã PIN chung — dùng PIN đã nhập lúc cài sổ
   if(dangKiemGia) return;
   dangKiemGia=true; lucKiemGia=Date.now();
   const ctl=new AbortController(), hg=setTimeout(()=>ctl.abort(),25000);
   let n=0;
   try{
-    const r=await fetch(API_DONGBO+'?viec=xemTruoc&t='+Date.now(), { signal:ctl.signal });
+    const r=await fetch(API_DONGBO, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:JSON.stringify({ hanhDong:'xemTruoc', pin:MAY.pin }), signal:ctl.signal });
     const j=JSON.parse(await r.text());
     if(j && j.ok && Array.isArray(j.mon)) n=j.mon.filter(m=>m.dich==='Menu' && m.trangThai==='do').length;
   }catch(e){ n=0; }
@@ -1958,6 +1959,7 @@ async function taiVaVeBaoCao(batBuoc){
 }
 function veNguonBC(){
   const g=$('nguonBC'); g.hidden=!MAY;
+  document.querySelector('.cong-cu').hidden=!MAY;   // công cụ nội bộ (xem giá nhập) — chỉ máy đã cài sổ (có PIN) mới thấy; máy khách mở link đơn Zalo thì không
   [...g.children].forEach(b=>{ b.hidden = b.dataset.nguon===nguonBC; });   // chỉ hiện lối sang nguồn kia
   const xemMay=dsXem===sales;   // sao lưu / nạp file / xoá lịch sử chỉ áp cho dữ liệu trong máy
   ['btnBackup','btnImport','btnClearData'].forEach(id=>{ $(id).style.display = xemMay ? '' : 'none'; });
