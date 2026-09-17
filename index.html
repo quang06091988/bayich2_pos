@@ -440,10 +440,6 @@
   .hist-row .meta{display:block;margin-top:2px;color:var(--ink-soft);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hist-row .amt{flex:none;white-space:nowrap;font-family:'Space Mono',monospace;font-weight:700;color:var(--green-deep)}
   .hist-row .chev{color:var(--ink-soft)}
-  .kpi .d{font-size:11px;font-weight:700;margin-top:3px}
-  .kpi .d.up{color:var(--green)}
-  .kpi .d.down{color:var(--danger)}
-  .kpi .d.flat{color:var(--ink-soft);font-weight:600}
   .rep-cmp{font-size:11.5px;color:var(--ink-soft);text-align:center;margin:-6px 0 10px}
   .rep-search{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
   .rep-search input{flex:1 1 100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;background:var(--paper);font-family:inherit;color:var(--ink)}
@@ -468,6 +464,7 @@
     z-index:800;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center;
   }
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.loi{background:var(--danger);font-weight:600}
 
   /* ---------- ĐƠN TỪ ZALO ---------- */
   .don-canh{border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;margin-bottom:12px;background:#fbf1dd;color:#7a5a12;border:1px solid #ecd9ac}
@@ -721,7 +718,6 @@
   </div>
 </div>
 
-<!-- CHỌN KIỂU HÓA ĐƠN (sau khi chốt đơn) -->
 <!-- BÁO CÁO -->
 <div class="overlay" id="reportOverlay">
   <div class="modal wide">
@@ -1300,7 +1296,7 @@ function chotDon({ method, cash, disc }){
     items: Object.keys(cart).map(k=>({ n:cart[k].n, u:cart[k].u||'', q:cart[k].qty, p:cart[k].p, note:cart[k].note||'' })),
     id: maDonMoi(), may: MAY ? MAY.ten : '', nguon: nguonDon
   };
-  sales.push(sale); persistSales();
+  sales.push(sale); luuSalesChac();
   choGui(sale); nguonDon='pos';
   lastSale=sale;
 
@@ -1725,7 +1721,7 @@ async function goiSo(payload){
 
 /* ---- hàng chờ gửi ---- */
 function docCho(){ try{ return JSON.parse(localStorage.getItem(CHO_KEY)||'{}')||{}; }catch(e){ return {}; } }
-function luuCho(m){ try{ localStorage.setItem(CHO_KEY, JSON.stringify(m)); }catch(e){} }
+function luuCho(m){ try{ localStorage.setItem(CHO_KEY, JSON.stringify(m)); return true; }catch(e){ return false; } }
 function banGui(s){
   return { id:s.id, ts:s.ts, bill:s.bill, may:s.may||'', nguon:s.nguon||'pos', method:s.method==='qr'?'qr':'cash',
     sub:s.sub||s.amt||0, disc:s.disc||0, amt:s.amt||0, cash:s.cash||0, change:s.change||0,
@@ -1734,7 +1730,11 @@ function banGui(s){
 }
 function choGui(s){
   if(!MAY || !s || !s.id || /^khong-so-/.test(s.id)) return;   // đơn bán lúc máy chưa cài sổ thì chỉ nằm trong máy
-  const m=docCho(); m[s.id]=banGui(s); luuCho(m);
+  const m=docCho(); m[s.id]=banGui(s);
+  if(!luuCho(m)){   // bộ nhớ máy đầy: dọn đơn cũ đã lên sổ rồi thử lại — vẫn không được thì báo rõ, không im lặng
+    donBoNho();
+    if(!luuCho(m)){ baoBoNhoDay('đơn '+(s.bill||'')+' chưa vào hàng chờ gửi sổ chung'); veSoPill(); return; }
+  }
   veSoPill(); setTimeout(guiSo,200);
 }
 function henGuiSua(s){ clearTimeout(hgSua); hgSua=setTimeout(()=>choGui(s),1000); }
@@ -1832,7 +1832,7 @@ function luuGhiNhanh(){
   const note=$('nhanhGhiChu').value.trim();
   const sale={ bill:billLabel(billCounter), ts:Date.now(), method:nhanhPT, qty:1, amt, sub:amt, disc:0, cash:0, change:0, khach:'', sdt:'',
     items:[{ n:'Bán lẻ (ghi nhanh)', u:'', q:1, p:amt, note }], id:maDonMoi(), may:MAY?MAY.ten:'', nguon:'nhanh' };
-  sales.push(sale); persistSales();
+  sales.push(sale); luuSalesChac();
   billCounter++; saveCounter(); renderCart();
   choGui(sale);
   $('nhanhOverlay').classList.remove('show');
@@ -1997,6 +1997,9 @@ function chuNguonDon(live){
 }
 function htmlDauBaoCao(){
   let h='';
+  const mb=dungLuongMay();
+  if(mb>BO_NHO_CANH_MB) h+=`<div class="don-canh do">Bộ nhớ máy gần đầy (${mb.toFixed(1).replace('.',',')} MB / khoảng 5 MB). Bấm <b>Sao lưu</b> rồi <b>Xóa lịch sử</b> ở cuối báo cáo — đơn đã lên sổ chung không mất.</div>`;
+  if(MAY && nguonBC==='may') h+=`<div class="don-canh">Máy giữ đơn ${GIU_DON_NGAY} ngày gần nhất — đơn cũ hơn xem ở <b>Sổ chung</b>.</div>`;
   if(!MAY) h+=`<div class="don-canh">Đang xem lịch sử <b>máy này</b>. Cài sổ chung để xem đơn của mọi máy và chốt ngày.<br><button class="btn btn-ghost" data-act="caimay">Cài sổ chung</button></div>`;
   else if(nguonBC==='chung' && loiBC && !coBC()) h+=`<div class="don-canh do">Không tải được sổ chung (${esc(loiBC)}) — đang xem dữ liệu máy này.<br><button class="btn btn-ghost" data-act="thulai">Thử lại</button></div>`;
   else if(nguonBC==='chung'){
@@ -2097,8 +2100,13 @@ function chepLinkDon(){
 /* ------------- TOAST ------------- */
 let toastTimer;
 function toast(msg){
-  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  const t=$('toast'); t.textContent=msg; t.classList.remove('loi'); t.classList.add('show');
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1900);
+}
+/* Báo lỗi cần người dùng làm gì đó: nền đỏ, hiện lâu hơn */
+function toastLoi(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show','loi');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),7000);
 }
 
 /* ------------- MOBILE SHEET ------------- */
@@ -2110,7 +2118,40 @@ let sales=loadSales();
 let dsXem=sales;       // đơn đang xem trong báo cáo: sổ chung (mọi máy) hoặc lịch sử máy này
 let dsChiTiet=sales;   // mảng chứa đơn đang mở ở màn phiếu (currentSaleIdx trỏ vào đây)
 function loadSales(){ try{ const v=localStorage.getItem('b2pos_sales'); if(v) return JSON.parse(v); }catch(e){} return []; }
-function persistSales(){ try{ localStorage.setItem('b2pos_sales', JSON.stringify(sales)); }catch(e){} }
+function persistSales(){ try{ localStorage.setItem('b2pos_sales', JSON.stringify(sales)); return true; }catch(e){ return false; } }
+/* Lưu lịch sử sau khi chốt / ghi đơn: đầy thì dọn đơn cũ đã lên sổ rồi thử lại, vẫn đầy thì báo */
+function luuSalesChac(){
+  if(persistSales()) return true;
+  donBoNho();
+  if(persistSales()) return true;
+  baoBoNhoDay('lịch sử máy này chưa lưu được');
+  return false;
+}
+
+/* ------------- BỘ NHỚ MÁY -------------
+   Trình duyệt chỉ cho mỗi trang khoảng 5MB. Đơn đã lên sổ chung và cũ hơn GIU_DON_NGAY ngày thì xoá khỏi máy
+   (sổ chung vẫn giữ đủ, xem ở Báo cáo → Sổ chung). Máy chưa cài sổ, đơn bán lúc chưa cài sổ, đơn còn trong hàng chờ: giữ nguyên. */
+const GIU_DON_NGAY=90, BO_NHO_CANH_MB=4;
+function donBoNho(){
+  if(!MAY) return 0;
+  const cho=docCho(), moc=Date.now()-GIU_DON_NGAY*864e5;
+  let bo=0;
+  for(let i=sales.length-1;i>=0;i--){
+    const s=sales[i];
+    if(s && s.id && !/^khong-so-/.test(s.id) && !cho[s.id] && s.ts<moc){ sales.splice(i,1); bo++; }   // sửa tại chỗ: dsXem / dsChiTiet cùng trỏ vào mảng này
+  }
+  if(bo) persistSales();
+  return bo;
+}
+/* Dung lượng POS đang dùng trong máy (MB, ước theo 2 byte / ký tự) */
+function dungLuongMay(){
+  let n=0;
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i)||''; if(/^b2pos_|^b2_/.test(k)) n+=k.length+(localStorage.getItem(k)||'').length; } }catch(e){}
+  return n*2/1048576;
+}
+function baoBoNhoDay(viec){
+  toastLoi('Bộ nhớ máy đầy — '+viec+'. Mở Báo cáo → Sao lưu rồi Xóa lịch sử.');
+}
 
 /* ------------- BÁO CÁO ------------- */
 let repRange='today';
@@ -2536,7 +2577,6 @@ async function doExcel(){
     [],
     ['Doanh thu (đ)', revenue],
     ['Số đơn', orders],
-    ['Trung bình / đơn (đ)', orders?Math.round(revenue/orders):0],
     ['Tiền mặt (đ)', cashRev],
     ['Chuyển khoản (đ)', qrRev],
     ['Đã giảm giá (đ)', totalDisc],
@@ -2901,6 +2941,7 @@ $('btnCaiAppDong').addEventListener('click',()=>{ try{ localStorage.setItem(AN_C
    KHỞI TẠO
    ============================================================ */
 try{ if(localStorage.getItem(CHU_TO_KEY)==='1') datChuTo(true); }catch(e){}
+donBoNho();   // đơn đã lên sổ chung, cũ hơn 90 ngày → xoá khỏi máy (trước khi vẽ gì)
 veCaiApp();
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost'))
   navigator.serviceWorker.register('sw.js').catch(e=>console.warn('Không đăng ký được service worker:', e));

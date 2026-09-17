@@ -52,3 +52,7 @@ Cột được tìm theo chữ tiêu đề, đổi thứ tự cột không sao.
 Đơn chốt xong vào hàng chờ trong máy rồi tự gửi lên. Mất mạng, Google lỗi hay hết giờ chờ thì cứ để trong hàng chờ
 và gửi lại sau — máy chủ nhận theo mã đơn nên không bao giờ trùng. Huỷ / khôi phục đơn và sửa tên, SĐT khách cũng
 được gửi lên. Đơn bán khi máy chưa cài sổ chỉ nằm trong máy. Mọi lệnh cần Mã PIN; sai PIN máy chủ chờ 2 giây mới trả lời.
+
+**Lịch sử trong máy:** trình duyệt chỉ cho khoảng 5 MB. Máy đã cài sổ tự xoá đơn **đã lên sổ chung** cũ hơn 90 ngày
+(xem lại ở Báo cáo → Sổ chung); đơn còn trong hàng chờ và đơn bán lúc chưa cài sổ thì giữ nguyên. Bộ nhớ trên 4 MB thì
+Báo cáo hiện cảnh báo; đầy hẳn thì báo đỏ ngay lúc chốt đơn (Sao lưu rồi Xóa lịch sử).
